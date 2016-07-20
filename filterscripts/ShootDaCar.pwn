@@ -33,7 +33,7 @@ main()
 public OnGameModeInit()
 {
 	// Don't use these lines if it's a filterscript
-	SetGameModeText("Blank Script");
+	SetGameModeText("Test mode");
 	AddPlayerClass(0, 1958.3783, 1343.1572, 15.3746, 269.1425, 0, 0, 0, 0, 0, 0);
 	return 1;
 }
@@ -86,12 +86,108 @@ public OnPlayerText(playerid, text[])
 	return 1;
 }
 
+#define COLOR_GREEN 0x00FF00FF
+#define COLOR_RED 0xFF0000FF
+stock GetPlayerIdFromName(playername[])
+{
+	for(new i = 0; i <= MAX_PLAYERS; i++)
+  	{
+    	if(IsPlayerConnected(i))
+    	{
+	      	new playername2[MAX_PLAYER_NAME];
+		    GetPlayerName(i, playername2, sizeof(playername2));
+	      	if(strcmp(playername2, playername, true, strlen(playername)) == 0)
+	      	{
+	        	return i;
+	      	}
+  		}
+  	}
+  	return INVALID_PLAYER_ID;
+}
+
 public OnPlayerCommandText(playerid, cmdtext[])
 {
-	if (strcmp("/mycommand", cmdtext, true, 10) == 0)
+//	if (strcmp("/getpos ", cmdtext, true, 8) == 0 || strcmp("getpos", cmdtext, true, 7) == 0)
+//	{
+//	    new Float:x = 0;
+//		new Float:y = 0;
+//		new Float:z = 0;
+//	    GetPlayerPos(playerid, x, y, z);
+//	    print("");
+//	    new xStr[32];
+//		new yStr[32];
+//		new zStr[32];
+//	    format( xStr, sizeof xStr, "%.4f", x);
+//	    format( yStr, sizeof yStr, "%.4f", y);
+//	    format( zStr, sizeof zStr, "%.4f", z);
+//
+//	    new result[150] = "Position: x";
+//	    strcat(result, xStr);
+//   	    strcat(result, "; y:");
+//	    strcat(result, yStr);
+//   	    strcat(result, "; z:");
+//	    strcat(result, zStr);
+//
+//	    SendClientMessage(playerid, COLOR_GREEN, result);
+//	    return 1;
+//	}
+	if (strcmp("/pos", cmdtext, true, 4) == 0 || strcmp("pos", cmdtext, true, 3) == 0)
 	{
-		// Do something here
-		return 1;
+	    new Float:x = 0;
+		new Float:y = 0;
+		new Float:z = 0;
+	    GetPlayerPos(playerid, x, y, z);
+	    new xStr[32];
+		new yStr[32];
+		new zStr[32];
+	    format( xStr, sizeof xStr, "%.4f", x);
+	    format( yStr, sizeof yStr, "%.4f", y);
+	    format( zStr, sizeof zStr, "%.4f", z);
+
+	    new result[150] = "Position: x";
+	    strcat(result, xStr);
+   	    strcat(result, "; y:");
+	    strcat(result, yStr);
+   	    strcat(result, "; z:");
+	    strcat(result, zStr);
+
+	    SendClientMessage(playerid, COLOR_GREEN, result);
+	    return 1;
+	}
+	if (strfind(cmdtext, "/tp ", true, 0) == 0)
+	{
+	    new startIndex = 3;
+
+	    if(startIndex == strlen(cmdtext) - 1) {
+            SendClientMessage(playerid, COLOR_RED, "Player name not found!");
+	        return 1;
+		}
+		
+	    new playerName[128];
+	    strmid(playerName, cmdtext, startIndex + 1, strlen(cmdtext), sizeof playerName);
+	    new anotherPlayerID = GetPlayerIdFromName(playerName);
+
+	    if(anotherPlayerID == INVALID_PLAYER_ID) {
+            SendClientMessage(playerid, COLOR_RED, "Invalid player name!");
+            return 0;
+		}
+	    new Float:x = 0;
+		new Float:y = 0;
+		new Float:z = 0;
+
+	    if(!GetPlayerPos(anotherPlayerID, x, y, z)) {
+		    SendClientMessage(playerid, COLOR_RED, "Player not in game or has not coordinates!");
+            return 0;
+		}
+		new interior = GetPlayerInterior(anotherPlayerID);
+		
+		if(interior != 0) {
+			SetPlayerInterior(playerid, interior);
+		}
+		
+		SetPlayerPos(playerid, x + 1, y, z + 0.5);    //todo set into interior, into vehicle and check textures
+	    SendClientMessage(playerid, COLOR_GREEN, "Teleport successful!");
+	    return 1;
 	}
 	return 0;
 }
