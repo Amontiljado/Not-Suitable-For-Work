@@ -3,6 +3,7 @@
 //#define FILTERSCRIPT
 
 #include <a_samp>
+#include "../include/gl_common.inc"
 
 #if defined FILTERSCRIPT
 
@@ -30,11 +31,81 @@ main()
 
 #endif
 
+new isGrantedModeOn = false;
+
+//WA
+new PELLET_COUNT = 10;
+
+enum DamageSize {
+	DEFAULT = 25.0,
+	
+	COLT45 = 15.0,
+	SILENCED = 12.0,
+	DEAGLE = 46.0,
+	
+	TEC9 = 12.0,
+	UZI = 10.0,
+	MP5 = 25.0,
+	
+	//todo check pellets count
+	SHOTGUN = 75.0, 	// 10/pellet
+	SAWEDOFF = 78.0,    // 10/pellet
+	SPAS = 80.0,        // 15/pellet
+	
+	AK47 = 30.0,
+	M4A1 = 30.0,
+	
+	RIFLE = 75.0,
+	SNIPER_RIFLE = 125.0,
+	MINIGUN = 140.0,
+	
+	//todo add custom damage from splash/fire
+	FLAMETHROWER = 25.0,
+	ROCKETLAUNCHER = 75.0,
+	HEATSEEKER = 75.0
+};
+
+#define WEAPON_ID_GRENADE 16
+#define WEAPON_ID_MOLOTOV 18
+	
+#define WEAPON_ID_VEHICLE_MISSILE 19
+#define WEAPON_ID_HYDRA_FLARE 20
+#define WEAPON_ID_JETPACK 21
+	
+#define WEAPON_ID_COLT45 22
+#define WEAPON_ID_SILENCED 23
+#define WEAPON_ID_DEAGLE 24
+#define WEAPON_ID_SHOTGUN 25
+#define WEAPON_ID_SAWEDOFF 26
+#define WEAPON_ID_SPAS 27
+#define WEAPON_ID_UZI 28
+#define WEAPON_ID_MP5 29
+#define WEAPON_ID_AK47 30
+#define WEAPON_ID_M4A1 31
+#define WEAPON_ID_TEC9 32
+#define WEAPON_ID_RIFLE 33
+#define WEAPON_ID_SNIPER_RIFLE 34
+#define WEAPON_ID_ROCKETLAUNCHER 35
+#define WEAPON_ID_HEATSEEKER 36
+#define WEAPON_ID_FLAMETHROWER 37
+#define WEAPON_ID_MINIGUN 38
+#define WEAPON_ID_EXPLOSIVE_CHARGES 39
+	//it's really need?
+	//DETONATOR = 40,
+	
+	//todo check
+#define WEAPON_ID_VEHICLE 49
+#define WEAPON_ID_HELI_BLADES 50
+#define WEAPON_ID_EXPLOSION 51
+#define WEAPON_ID_DROWN 53
+#define WEAPON_ID_COLLISION 54
+
+
 public OnGameModeInit()
 {
-	// Don't use these lines if it's a filterscript
 	SetGameModeText("Test mode");
 	AddPlayerClass(0, 1958.3783, 1343.1572, 15.3746, 269.1425, 0, 0, 0, 0, 0, 0);
+	
 	return 1;
 }
 
@@ -88,6 +159,7 @@ public OnPlayerText(playerid, text[])
 
 #define COLOR_GREEN 0x00FF00FF
 #define COLOR_RED 0xFF0000FF
+#define COLOR_BLUE 0x0000FFFF
 stock GetPlayerIdFromName(playername[])
 {
 	for(new i = 0; i <= MAX_PLAYERS; i++)
@@ -131,6 +203,31 @@ public OnPlayerCommandText(playerid, cmdtext[])
 //	    SendClientMessage(playerid, COLOR_GREEN, result);
 //	    return 1;
 //	}
+	if(strcmp("/mg", cmdtext, true, 3) == 0) {
+	    if(isGrantedModeOn) {
+	    	new mGunAmmoAmount = 300;
+		    new mGunId = 38;
+	        GivePlayerWeapon(playerid, mGunId, mGunAmmoAmount);
+        	SetPlayerArmedWeapon(playerid, mGunId);
+        	isGrantedModeOn = !isGrantedModeOn;
+        }
+        return 1;
+	}
+	if(strcmp("/stinger", cmdtext, true, 6) == 0) {
+	    if(isGrantedModeOn) {
+	    	new stingerAmmoAmount = 15;
+		    new stingerId = 36;
+	        GivePlayerWeapon(playerid, stingerId, stingerAmmoAmount);
+        	SetPlayerArmedWeapon(playerid, stingerId);
+        	isGrantedModeOn = !isGrantedModeOn;
+        }
+        return 1;
+	}
+	if(strcmp("/sudo", cmdtext, true, 5) == 0) {
+//	    isGrantedModeOn = true;
+		isGrantedModeOn = !isGrantedModeOn;
+		return 1;
+	}
 	if (strcmp("/pos", cmdtext, true, 4) == 0 || strcmp("pos", cmdtext, true, 3) == 0)
 	{
 	    new Float:x = 0;
@@ -186,7 +283,7 @@ public OnPlayerCommandText(playerid, cmdtext[])
 		}
 		
 		SetPlayerPos(playerid, x + 1, y, z + 0.5);    //todo set into interior, into vehicle and check textures
-	    SendClientMessage(playerid, COLOR_GREEN, "Teleport successful!");
+	    SendClientMessage(playerid, COLOR_GREEN, "Teleportation successful!");
 	    return 1;
 	}
 	return 0;
@@ -327,32 +424,82 @@ public OnPlayerClickPlayer(playerid, clickedplayerid, source)
 	return 1;
 }
 
-//==============//
+//public OnPlayerDamage(&playerid, &Float:amount, &issuerid, &weapon, &bodypart) {
+//	return 1;
+//}
+
 public OnPlayerWeaponShot(playerid, weaponid, hittype, hitid, Float:fX, Float:fY, Float:fZ)
 {
+	//if(isGrantedModeOn) {
+	//    new output[128];
+	//    format(output, sizeof(output), "Weapon id: %d", weaponid);
+	//    SendClientMessage(playerid, COLOR_BLUE, output);
+	//}
 	if(hittype == BULLET_HIT_TYPE_VEHICLE) {
-        new Float:vh;
+        new Float:vh, Float:baseDamage;
         GetVehicleHealth(hitid,vh);
         if(GetVehicleHealth(hitid,vh) <= 0.0) {
 			return 0;
 		}
 		
 		switch(weaponid) {
-		    case 25: {
-			        SetVehicleHealth(hitid,vh - 100.0);
-		        }
-            case 24: {
-	                SetVehicleHealth(hitid,vh - 20.0);
-                }
-            case 49: {
-	                SetVehicleHealth(hitid,vh - 80.0);
-                }
-            case 51: {
-            	   	SetVehicleHealth(hitid,vh - 100.0);
-                }
+			case WEAPON_COLT45: {
+				baseDamage = 15.0;
+			}
+			case WEAPON_SILENCED: {
+				baseDamage = 12.0;
+			}
+			case WEAPON_DEAGLE: {
+				baseDamage = 46.0;
+			}
+			case WEAPON_TEC9: {
+				baseDamage = 12.0;
+			}
+			case WEAPON_UZI: {
+				baseDamage = 10.0;
+			}
+			case WEAPON_MP5: {
+				baseDamage = 25.0;
+			}
+			case WEAPON_AK47: {
+				baseDamage = 30.0;
+			}
+			case WEAPON_M4: {
+				baseDamage = 30.0;
+			}
+			case WEAPON_RIFLE: {
+				baseDamage = 75.0;
+			}
+			case WEAPON_ID_SNIPER_RIFLE: {
+				baseDamage = 125.0;
+			}
+			case WEAPON_MINIGUN: {
+				baseDamage = 140.0;
+			}
+			case WEAPON_ID_FLAMETHROWER: {
+				baseDamage = 25.0;
+			}
+			case WEAPON_ROCKETLAUNCHER: {
+				baseDamage = 75.0;
+			}
+			case WEAPON_HEATSEEKER: {
+				baseDamage = 75.0;
+			}
+			case WEAPON_SHOTGUN: {
+                baseDamage = 75.0;
+			}
+			case WEAPON_SAWEDOFF: {
+                baseDamage = 78.0;
+			}
+			case WEAPON_SHOTGSPA: {
+				baseDamage = 80.0;
+			}
             default:
-	            SetVehicleHealth(hitid,vh-30.0);
+				baseDamage = 25.0;
 		}
+		
+//		new Float:damage = baseDamage;
+		SetVehicleHealth(hitid, vh - baseDamage);
 	}
 	return 1;
 }
